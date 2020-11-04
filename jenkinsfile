@@ -1,0 +1,46 @@
+pipeline
+{
+    agent any 
+    environment
+    {
+        def arti_path = "sample/target"
+        def tomcat_path = "/home/manjula/applications/tomcat/apache-tomcat-8.5.59/webapps/"
+        def mvn_path = "/home/manjula/applications/maven/apache-maven-3.6.3/bin/mvn"
+    }
+    
+    stages 
+    {
+        stage('git')
+        {
+            steps
+            {
+             git 'https://github.com/manjulapulicharla/jenkinsdemo.git'   
+            }
+        }
+        stage('build')
+        {
+            steps
+            {
+                sh ''+mvn_path+' clean package -f sample/'
+            }
+        }
+        stage('nexus')
+        {
+            steps
+            {
+                    nexusArtifactUploader artifacts: [[artifactId: 'sample', classifier: '', file: 'sample/target/sample-1.0-SNAPSHOT.jar', type: 'jar']], credentialsId: 'nexuslogin', groupId: 'formac.devops', nexusUrl: '192.168.29.100:8081/nexus', nexusVersion: 'nexus2', protocol: 'http', repository: 'snapshots', version: '1.0_SNAPSHOT'    
+
+            }
+        }
+        stage('deploy')
+        {
+            steps
+            {
+                dir(arti_path)
+                {
+                    sh 'cp *.jar '+tomcat_path+''
+                }
+            }
+        }
+    }
+}
